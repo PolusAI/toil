@@ -1853,8 +1853,9 @@ class CWLJob(Job):
                 (cast(int, req["tmpdirSize"]) * (2 ** 20))
                 + (cast(int, req["outdirSize"]) * (2 ** 20))
             ),
+            jobName=shortname(displayName),
             unitName=unitName,
-            displayName=displayName,
+            displayName=displayName
         )
 
         self.cwljob = cwljob
