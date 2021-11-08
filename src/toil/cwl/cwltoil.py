@@ -1840,7 +1840,7 @@ class CWLJob(Job):
         # pass the default of None if basecommand is empty
         try:
             displayName = str(self.cwltool.tool["id"])
-            unitName = f"{workflowName}.{shortname(displayName)}"
+            unitName =  f"{workflowName}.{shortname(displayName)}" if workflowName else f"{shortname(displayName)}"
         except KeyError:
             displayName = None
             unitName = None
@@ -2056,7 +2056,7 @@ def makeJob(
     jobobj: dict,
     runtime_context: cwltool.context.RuntimeContext,
     conditional: Union[Conditional, None],
-    workflowId: str,
+    workflowId: str = ''
 ) -> tuple:
     """
     Create the correct Toil Job object for the CWL tool.
@@ -3392,6 +3392,7 @@ def main(args: Union[List[str]] = None, stdout: TextIO = sys.stdout) -> int:
                 # were required.
                 rm_unprocessed_secondary_files(param_value)
 
+            logger.debug('tool ', tool)
             try:
                 wf1, _ = makeJob(
                     tool=tool,
