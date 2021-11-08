@@ -2387,6 +2387,9 @@ class CWLWorkflow(Job):
         promises: Dict[str, Job] = {}
 
         # `jobs` dict from step id to job that implements that step.
+        workflowId = shortname(self.cwlwf.tool["id"])
+        logger.debug("Workflow Id is %s", workflowId)
+        
         jobs = {}
 
         for inp in self.cwlwf.tool["inputs"]:
