@@ -3399,6 +3399,7 @@ def main(args: Union[List[str]] = None, stdout: TextIO = sys.stdout) -> int:
                     jobobj={},
                     runtime_context=runtime_context,
                     conditional=None,
+                    workflowId='workflow',
                 )
             except cwltool.errors.UnsupportedRequirement as err:
                 logging.error(err)
