@@ -958,7 +958,7 @@ class Job:
     Class represents a unit of work in toil.
     """
     def __init__(self, memory=None, cores=None, disk=None, preemptable=None,
-                       unitName='', checkpoint=False, jobName='', displayName='',
+                       unitName='', checkpoint=False, displayName='',
                        descriptionClass=None):
         """
         This method must be called by any overriding constructor.
@@ -986,7 +986,7 @@ class Job:
         """
 
         # Fill in our various names
-        jobName = jobName if jobName else self.__class__.__name__
+        jobName = self.__class__.__name__
         displayName = displayName if displayName else jobName
 
 
