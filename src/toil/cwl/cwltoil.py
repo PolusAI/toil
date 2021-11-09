@@ -1764,6 +1764,7 @@ class CWLJobWrapper(Job):
         tool: Process,
         cwljob: dict,
         runtime_context: cwltool.context.RuntimeContext,
+        workflow_name: str,
         conditional: Union[Conditional, None] = None,
     ):
         """Store our context for later evaluation."""
@@ -1772,6 +1773,7 @@ class CWLJobWrapper(Job):
         self.cwljob = cwljob
         self.runtime_context = runtime_context
         self.conditional = conditional
+        self.workflow_name = workflow_name
 
     def run(self, file_store: AbstractFileStore) -> Any:
         """Create a child job with the correct resource requirements set."""
@@ -1785,6 +1787,7 @@ class CWLJobWrapper(Job):
             tool=self.cwltool,
             cwljob=cwljob,
             runtime_context=self.runtime_context,
+            workflow_name=self.workflow_name,
             conditional=self.conditional,
         )
         self.addChild(realjob)
@@ -1799,8 +1802,8 @@ class CWLJob(Job):
         tool: Process,
         cwljob: dict,
         runtime_context: cwltool.context.RuntimeContext,
+        workflow_name: str,
         conditional: Union[Conditional, None] = None,
-        workflowName: str = ''
     ):
         """Store the context for later execution."""
 
@@ -1837,15 +1840,14 @@ class CWLJob(Job):
             )
 
         req = tool.evalResources(self.builder, runtime_context)
-        # pass the default of None if basecommand is empty
         try:
             displayName = str(self.cwltool.tool["id"])
-            unitName =  f"{workflowName}.{shortname(displayName)}" if workflowName else f"{shortname(displayName)}"
+            #Make our job names more descriptive for HPC batch systems.
+            unitName =  f"{workflow_name}.{shortname(displayName)}" if workflow_name else f"{shortname(displayName)}"
         except KeyError:
             displayName = None
             unitName = None
 
-        logger.debug('unitName is %s and displayName is %s', unitName, displayName)
         super().__init__(
             cores=req["cores"],
             memory=int(req["ram"] * (2 ** 20)),
@@ -1858,12 +1860,6 @@ class CWLJob(Job):
         )
 
         self.cwljob = cwljob
-        try:
-            self.jobName = str(self.cwltool.tool["id"])
-        except KeyError:
-            # fall back to the Toil defined class name if the tool doesn't have
-            # an identifier
-            pass
         self.runtime_context = runtime_context
         self.step_inputs = self.cwltool.tool["inputs"]
         self.workdir = runtime_context.workdir  # type: ignore
@@ -2055,8 +2051,8 @@ def makeJob(
     tool: Process,
     jobobj: dict,
     runtime_context: cwltool.context.RuntimeContext,
+    workflow_name: str,
     conditional: Union[Conditional, None],
-    workflowId: str = ''
 ) -> tuple:
     """
     Create the correct Toil Job object for the CWL tool.
@@ -2100,9 +2096,10 @@ def makeJob(
                         jobobj,
                         runtime_context,
                         conditional=conditional,
+                        workflow_name=workflow_name
                     )
                     return job, job
-        job = CWLJob(tool, jobobj, runtime_context, conditional, workflowId)  # type: ignore
+        job = CWLJob(tool, jobobj, runtime_context, conditional, workflow_name)  # type: ignore
         return job, job
 
 
@@ -2119,7 +2116,7 @@ class CWLScatter(Job):
         cwljob: dict,
         runtime_context: cwltool.context.RuntimeContext,
         conditional: Union[Conditional, None],
-        workflowId: str,
+        workflow_name: str,
     ):
         """Store our context for later execution."""
         super().__init__(cores=1, memory="1GiB", disk="1MiB")
@@ -2127,7 +2124,7 @@ class CWLScatter(Job):
         self.cwljob = cwljob
         self.runtime_context = runtime_context
         self.conditional = conditional
-        self.workflowId = workflowId
+        self.workflow_name = workflow_name
 
     def flat_crossproduct_scatter(
         self, joborder: dict, scatter_keys: list, outputs: list, postScatterEval: Any
@@ -2143,8 +2140,8 @@ class CWLScatter(Job):
                     tool=self.step.embedded_tool,
                     jobobj=updated_joborder,
                     runtime_context=self.runtime_context,
+                    workflow_name=self.workflow_name,
                     conditional=self.conditional,
-                    workflowId=self.workflowId,
                 )
                 self.addChild(subjob)
                 outputs.append(followOn.rv())
@@ -2168,8 +2165,8 @@ class CWLScatter(Job):
                     tool=self.step.embedded_tool,
                     jobobj=updated_joborder,
                     runtime_context=self.runtime_context,
+                    workflow_name=self.workflow_name,
                     conditional=self.conditional,
-                    workflowId=self.workflowId,
                 )
                 self.addChild(subjob)
                 outputs.append(followOn.rv())
@@ -2233,8 +2230,8 @@ class CWLScatter(Job):
                     tool=self.step.embedded_tool,
                     jobobj=copyjob,
                     runtime_context=self.runtime_context,
+                    workflow_name=self.workflow_name,
                     conditional=self.conditional,
-                    workflowId=self.workflowId,
                 )
                 self.addChild(subjob)
                 outputs.append(follow_on.rv())
@@ -2391,10 +2388,9 @@ class CWLWorkflow(Job):
         # to: the job that will produce that value.
         promises: Dict[str, Job] = {}
 
-        # `jobs` dict from step id to job that implements that step.
-        workflowId = shortname(self.cwlwf.tool["id"])
-        logger.debug("Workflow Id is %s", workflowId)
+        workflow_name = shortname(self.cwlwf.tool["id"])
         
+        # `jobs` dict from step id to job that implements that step.
         jobs = {}
 
         for inp in self.cwlwf.tool["inputs"]:
@@ -2459,7 +2455,7 @@ class CWLWorkflow(Job):
                                 UnresolvedDict(jobobj),
                                 self.runtime_context,
                                 conditional=conditional,
-                                workflowId=workflowId,
+                                workflow_name=workflow_name,
                             )
                             followOn = CWLGather(step, wfjob.rv())
                             wfjob.addFollowOn(followOn)
@@ -2473,8 +2469,8 @@ class CWLWorkflow(Job):
                                 tool=step.embedded_tool,
                                 jobobj=UnresolvedDict(jobobj),
                                 runtime_context=self.runtime_context,
+                                workflow_name=workflow_name,
                                 conditional=conditional,
-                                workflowId=workflowId,
                             )
                             logger.debug(
                                 "Is non-scatter with job %s and follow-on %s",
@@ -3398,8 +3394,8 @@ def main(args: Union[List[str]] = None, stdout: TextIO = sys.stdout) -> int:
                     tool=tool,
                     jobobj={},
                     runtime_context=runtime_context,
+                    workflow_name='workflow',
                     conditional=None,
-                    workflowId='workflow',
                 )
             except cwltool.errors.UnsupportedRequirement as err:
                 logging.error(err)
