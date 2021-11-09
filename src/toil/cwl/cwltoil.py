@@ -2095,11 +2095,11 @@ def makeJob(
                         cast(ToilCommandLineTool, tool),
                         jobobj,
                         runtime_context,
+                        workflow_name=workflow_name,
                         conditional=conditional,
-                        workflow_name=workflow_name
                     )
                     return job, job
-        job = CWLJob(tool, jobobj, runtime_context, conditional, workflow_name)  # type: ignore
+        job = CWLJob(tool, jobobj, runtime_context, workflow_name, conditional)  # type: ignore
         return job, job
 
 
@@ -2115,8 +2115,8 @@ class CWLScatter(Job):
         step: cwltool.workflow.WorkflowStep,
         cwljob: dict,
         runtime_context: cwltool.context.RuntimeContext,
-        conditional: Union[Conditional, None],
         workflow_name: str,
+        conditional: Union[Conditional, None],
     ):
         """Store our context for later execution."""
         super().__init__(cores=1, memory="1GiB", disk="1MiB")
@@ -2454,8 +2454,8 @@ class CWLWorkflow(Job):
                                 step,
                                 UnresolvedDict(jobobj),
                                 self.runtime_context,
-                                conditional=conditional,
                                 workflow_name=workflow_name,
+                                conditional=conditional,
                             )
                             followOn = CWLGather(step, wfjob.rv())
                             wfjob.addFollowOn(followOn)
