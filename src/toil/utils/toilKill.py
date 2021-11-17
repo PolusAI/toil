@@ -46,7 +46,7 @@ def main() -> None:
         with open(pid_log) as f:
             pid2kill = f.read().strip()
         try:
-            os.kill(int(pid2kill), signal.SIGKILL)
+            os.kill(int(pid2kill), signal.SIGTERM)
             logger.info("Toil process %s successfully terminated." % str(pid2kill))
         except OSError:
             logger.error("Toil process %s could not be terminated." % str(pid2kill))
