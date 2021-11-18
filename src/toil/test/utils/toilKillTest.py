@@ -45,7 +45,7 @@ class ToilKillTest(ToilTest):
     def testCWLToilKill(self):
         """Test "toil kill" on a CWL workflow with a 100 second sleep."""
 
-        run_cmd = ['toil-cwl-runner', '--disableProgress', '--jobStore', self.jobstore, self.cwl, self.yaml]
+        run_cmd = ['toil-cwl-runner', '--jobStore', self.jobstore, self.cwl, self.yaml]
         kill_cmd = ['toil', 'kill', self.jobstore]
 
         cwlProcess = subprocess.Popen(run_cmd)
