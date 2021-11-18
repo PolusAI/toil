@@ -30,7 +30,7 @@ class ToilKillTest(ToilTest):
     def setUp(self):
         """Shared test variables."""
         self.cwl = os.path.abspath('src/toil/test/utils/ABCWorkflowDebug/sleep.cwl')
-        self.yaml = os.path.abspath('src/toil/test/utils/ABCWorkflowDebug//sleep.yaml')
+        self.yaml = os.path.abspath('src/toil/test/utils/ABCWorkflowDebug/sleep.yaml')
         self.jobstore = os.path.join(os.getcwd(), 'testkill')
 
     def tearDown(self):
