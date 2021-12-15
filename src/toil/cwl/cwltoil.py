@@ -1662,8 +1662,10 @@ def toilStageFiles(
         separateDirs=False,
         stage_listing=True,
     )
+    index = 0
     for _, p in pm.items():
         logger.debug("Staging output: %s", p)
+        index = index + 1
         if p.staged:
             # We're supposed to copy/expose something.
             # Note that we have to handle writable versions of everything
@@ -1715,6 +1717,10 @@ def toilStageFiles(
                         )
                     # TODO: can a toildir: "file" get here?
             else:
+                if os.path.exists(p.target) and p.type == "File":
+                    logger.debug(f'Target {p.target} exists and it is of file type. Rename')
+                    p.target = p.target + f"_{index}"
+
                 # We are saving to the filesystem so we only really need exportFile for actual files.
                 if not os.path.exists(p.target) and p.type in [
                     "Directory",
