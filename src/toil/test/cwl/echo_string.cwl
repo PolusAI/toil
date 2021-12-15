@@ -33,7 +33,11 @@ steps:
        file: File
       baseCommand: [ ls , -lh]
       arguments: [ $(inputs.file) ]
-      outputs: []
+      stdout: "list.out"
+      stderr: "list.err"
+      outputs: 
+        outList: stdout
+        errList: stderr
     in:
       - id: file
         linkMerge: merge_flattened
@@ -42,9 +46,19 @@ steps:
           - hello/err
     scatter:
       - file
-    out: []
+    out: 
+      - id: outList
+      - id: errList
 
-outputs: []
+outputs:
+  - id: outList
+    type: File[]
+    outputSource: ["list/outList"]
+
+  - id: errList
+    type: File[]
+    outputSource: ["list/errList"]
+
 
 requirements:
   - class: ScatterFeatureRequirement

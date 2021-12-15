@@ -665,7 +665,20 @@ class CWLSmallTests(ToilTest):
         log.debug(f'Now running: {" ".join(cmd)}')
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        assert stdout == b'{}', f"Got wrong output: {stdout}\nWith error: {stderr}"
+        outputs = json.loads(stdout)
+        outList = outputs["outList"]
+        errList = outputs["errList"]
+        assert len(outList) == 4, f"outList shoud have four file elements {outList}"
+        assert len(errList) == 4, f"errList shoud have four file elements {errList}"
+        # This is a test on the scatter functionality and stdout.
+        # Each value of scatter should generate a separate file in the output.
+        outListOne = outputs["outList"][0]["location"]
+        outListTwo = outputs["outList"][1]["location"]
+        assert outListOne != outListTwo, f"Files should be different: {outListOne} {outListTwo}"
+        errListOne = outputs["errList"][0]["location"]
+        errListTwo = outputs["errList"][1]["location"]
+        assert errListOne != errListTwo, f"Files should be different: {errListOne} {errListTwo}"
+
         assert b'Finished toil run successfully' in stderr
         assert p.returncode == 0
 
