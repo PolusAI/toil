@@ -665,7 +665,6 @@ class CWLSmallTests(ToilTest):
         log.debug(f'Now running: {" ".join(cmd)}')
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-
         assert stdout == b'{}', f"Got wrong output: {stdout}\nWith error: {stderr}"
         assert b'Finished toil run successfully' in stderr
         assert p.returncode == 0
