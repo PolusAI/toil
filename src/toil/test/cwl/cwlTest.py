@@ -666,7 +666,7 @@ class CWLSmallTests(ToilTest):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
 
-        assert stdout == b'{}', f"stdout should be an empty array {stdout}"
+        assert stdout == b'{}', f"Got wrong output: {stdout}\nWith error: {stderr}"
         assert b'Finished toil run successfully' in stderr
         assert p.returncode == 0
 
