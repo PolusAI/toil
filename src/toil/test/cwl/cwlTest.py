@@ -665,6 +665,23 @@ class CWLSmallTests(ToilTest):
         log.debug(f'Now running: {" ".join(cmd)}')
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
+
+        assert stdout == b'{}', f"stdout should be an empty array {stdout}"
+        assert b'Finished toil run successfully' in stderr
+        assert p.returncode == 0
+
+
+    def test_workflow_echo_string_scatter(self):
+        toil = 'toil-cwl-runner'
+        jobstore = f'--jobStore=file:explicit-local-jobstore-{uuid.uuid4()}'
+        option_1 = '--strict-memory-limit'
+        option_2 = '--force-docker-pull'
+        option_3 = '--clean=always'
+        cwl = os.path.join(os.path.dirname(__file__), 'echo_string_scatter.cwl')
+        cmd = [toil, jobstore, option_1, option_2, option_3, cwl]
+        log.debug(f'Now running: {" ".join(cmd)}')
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
         outputs = json.loads(stdout)
         outList = outputs["outList"]
         errList = outputs["errList"]

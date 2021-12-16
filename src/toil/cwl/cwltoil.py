@@ -852,12 +852,40 @@ class ToilPathMapper(PathMapper):
                     # If we didn't download something that is a toilfile:
                     # reference, we just pass that along.
 
-                    logger.debug(
-                        "ToilPathMapper adding file mapping %s -> %s", deref, tgt
+                    """Link or copy files to their targets. Create them as needed."""
+                    targets = {} # type: Dict[str, MapperEnt]
+                    for _, value in self._pathmap.items():
+                        # If the target already exists in the pathmap, it means we have a conflict.  But we didn't change tgt to reflect new name.
+                        new_target = value.target.rpartition('_')[0]
+                        if value.target == tgt: #Conflict detected in the pathmap
+                            new_target = tgt
+                        if new_target and new_target == tgt:
+                            i = 2
+                            new_tgt = f"{tgt}_{i}"
+                            while new_tgt in targets:
+                                i += 1
+                                new_tgt = f"{tgt}_{i}"
+                            targets[new_tgt] = new_tgt
+
+                    for _, value_conflict in targets.items():
+                        logger.debug(
+                            "ToilPathMapper adding file mapping for conflict %s -> %s", deref, value_conflict
+                        )
+                        self._pathmap[path] = MapperEnt(
+                            deref, value_conflict, "WritableFile" if copy else "File", staged
                     )
-                    self._pathmap[path] = MapperEnt(
-                        deref, tgt, "WritableFile" if copy else "File", staged
-                    )
+                    # No conflicts detected so we can write out the original name.
+                    if not targets:
+                        logger.debug(
+                            "ToilPathMapper adding file mapping %s -> %s", deref, tgt
+                        )
+
+                        self._pathmap[path] = MapperEnt(
+                            deref, tgt, "WritableFile" if copy else "File", staged
+                       )
+
+
+
 
             # Handle all secondary files that need to be next to this one.
             self.visitlisting(
@@ -1662,10 +1690,8 @@ def toilStageFiles(
         separateDirs=False,
         stage_listing=True,
     )
-    index = 0
     for _, p in pm.items():
         logger.debug("Staging output: %s", p)
-        index = index + 1
         if p.staged:
             # We're supposed to copy/expose something.
             # Note that we have to handle writable versions of everything
@@ -1717,10 +1743,6 @@ def toilStageFiles(
                         )
                     # TODO: can a toildir: "file" get here?
             else:
-                if os.path.exists(p.target) and p.type == "File":
-                    logger.debug(f'Target {p.target} exists and it is of file type. Rename')
-                    p.target = p.target + f"_{index}"
-
                 # We are saving to the filesystem so we only really need exportFile for actual files.
                 if not os.path.exists(p.target) and p.type in [
                     "Directory",
