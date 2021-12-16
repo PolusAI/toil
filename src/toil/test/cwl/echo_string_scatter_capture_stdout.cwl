@@ -34,30 +34,22 @@ steps:
       baseCommand: [ ls , -lh]
       arguments: [ $(inputs.file) ]
       stdout: "list.out"
-      stderr: "list.err"
       outputs: 
-        outList: stdout
-        errList: stderr
+        list_out: stdout
     in:
       - id: file
         linkMerge: merge_flattened
         source:
           - hello/out
-          - hello/err
     scatter:
       - file
     out: 
-      - id: outList
-      - id: errList
+      - id: list_out
 
 outputs:
-  - id: outList
+  - id: list_out
     type: File[]
-    outputSource: ["list/outList"]
-
-  - id: errList
-    type: File[]
-    outputSource: ["list/errList"]
+    outputSource: ["list/list_out"]
 
 
 requirements:
