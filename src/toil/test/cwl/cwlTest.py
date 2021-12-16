@@ -671,30 +671,30 @@ class CWLSmallTests(ToilTest):
         assert p.returncode == 0
 
 
-    def test_workflow_echo_string_scatter(self):
+    def test_workflow_echo_string_scatter_capture_stdout_stderr(self):
         toil = 'toil-cwl-runner'
         jobstore = f'--jobStore=file:explicit-local-jobstore-{uuid.uuid4()}'
         option_1 = '--strict-memory-limit'
         option_2 = '--force-docker-pull'
         option_3 = '--clean=always'
-        cwl = os.path.join(os.path.dirname(__file__), 'echo_string_scatter.cwl')
+        cwl = os.path.join(os.path.dirname(__file__), 'echo_string_scatter_capture_stdout_stderr.cwl')
         cmd = [toil, jobstore, option_1, option_2, option_3, cwl]
         log.debug(f'Now running: {" ".join(cmd)}')
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         outputs = json.loads(stdout)
-        outList = outputs["outList"]
-        errList = outputs["errList"]
-        assert len(outList) == 4, f"outList shoud have four file elements {outList}"
-        assert len(errList) == 4, f"errList shoud have four file elements {errList}"
+        out_list = outputs["outList"]
+        err_list = outputs["errList"]
+        assert len(out_list) == 4, f"outList shoud have four file elements {out_list}"
+        assert len(err_list) == 4, f"errList shoud have four file elements {err_list}"
         # This is a test on the scatter functionality and stdout.
         # Each value of scatter should generate a separate file in the output.
-        outListOne = outputs["outList"][0]["location"]
-        outListTwo = outputs["outList"][1]["location"]
-        assert outListOne != outListTwo, f"Files should be different: {outListOne} {outListTwo}"
-        errListOne = outputs["errList"][0]["location"]
-        errListTwo = outputs["errList"][1]["location"]
-        assert errListOne != errListTwo, f"Files should be different: {errListOne} {errListTwo}"
+        olo = outputs["outList"][0]["location"]
+        olt = outputs["outList"][1]["location"]
+        assert olo != olt, f"Files should be different: {olo} {olt}"
+        elo = outputs["errList"][0]["location"]
+        elt = outputs["errList"][1]["location"]
+        assert elo != elt, f"Files should be different: {elo} {elt}"
 
         assert b'Finished toil run successfully' in stderr
         assert p.returncode == 0
